@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard | Mental Health Support System</title>
+  <style>
+    :root {
+      --primary: #4cafef;
+      --primary-dark: #388ecf;
+      --bg: #f5f9ff;
+      --text: #222;
+      --card: #fff;
+      --muted: #666;
+      --ring-bg: #eee;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark {
+      --bg: #121212;
+      --text: #f0f0f0;
+      --card: #1e1e1e;
+      --ring-bg: #2a2a2a;
+    }
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 20px 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 20px;
+      text-align: center;
+      line-height: 1.2;
+    }
+    header .sub {
+      margin-top: 6px;
+      font-size: 13px;
+      opacity: .95;
+      text-align: center;
+    }
+    .top-actions { position:absolute; right:12px; top:10px; display:flex; gap:8px; }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      transition: transform 0.25s;
+      animation: fadeIn 0.5s ease;
+    }
+    .card:hover { transform: translateY(-4px); }
+    @keyframes fadeIn { from {opacity:0; transform: translateY(10px);} to {opacity:1; transform:none;} }
+    h2 { margin: 0 0 10px; font-size: 18px; }
+    button, .btn, .button, .top-actions a.button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    button:hover, .btn:hover, .button:hover { background: var(--primary-dark); }
+    .ghost { background: transparent; color: inherit; border: 1px solid rgba(0,0,0,.15); }
+    textarea, input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: inherit;
+      color: inherit;
+    }
+    canvas { max-width: 100%; }
+    .breathing-circle {
+      width: 120px; height: 120px; border-radius: 50%; background: var(--primary); margin: 10px auto;
+      animation: breathe 8s infinite;
+    }
+    @keyframes breathe { 0% { transform: scale(1); opacity: .7;} 50% { transform: scale(1.5); opacity: 1;} 100% { transform: scale(1); opacity: .7;} }
+    .badge { display:inline-block; background:#ffd54f; padding:4px 8px; border-radius:6px; margin:3px; font-size:12px; color:#663c00; }
+    .profile { display:flex; flex-direction:column; align-items:center; gap:10px; }
+    .profile img { width:100px; height:100px; border-radius:50%; object-fit:cover; box-shadow:0 0 6px rgba(0,0,0,.25); }
+    .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .list { list-style:none; padding:0; margin:8px 0 0; }
+    .list li { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px; border-radius:8px; background: rgba(0,0,0,.04); margin-bottom:6px; }
+    body.dark .list li { background: rgba(255,255,255,.06); }
+    .calendar { display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; }
+    .cal-head { display:grid; grid-template-columns: repeat(7,1fr); gap:6px; margin-bottom:6px; font-size:12px; opacity:.7; }
+    .day { padding:10px; border-radius:8px; text-align:center; background: rgba(0,0,0,.04); cursor:pointer; }
+    .day:hover { background: rgba(0,0,0,.08); }
+    .day.muted { opacity:.4; }
+    .day.has-entry { outline: 2px solid var(--primary); }
+    .progress-ring { width:120px; height:120px; display:block; margin:auto; }
+    .note { font-size: 12px; opacity:.7; }
+    a { color: var(--primary-dark); }
+    .back-button { background: #6c757d; color:#fff; }
+    .back-button:hover { background: #5a6268; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+</head>
+<body>
+<header>
+  <h1>🌿 Mental Health Dashboard</h1>
+  <div class="sub" id="greeting">Welcome back!</div>
+  <div class="top-actions">
+    <button id="toggleDark" title="Toggle dark mode" aria-label="Toggle dark mode">🌙</button>
+    <a href="home.html" class="button back-button" title="Back to Home" aria-label="Back to Home">← Back</a>
+  </div>
+</header>
+
+  <div class="container">
+
+    <!-- Profile -->
+    <div class="card">
+      <h2>👤 Profile</h2>
+      <div class="profile">
+        <img id="profilePic" src="https://via.placeholder.com/100" alt="Profile Picture" />
+        <div class="row" style="justify-content:center; width:100%; max-width:320px;">
+          <input type="file" id="uploadPic" accept="image/*" aria-label="Upload profile picture" />
+          <button id="removePic" class="ghost" title="Remove picture" aria-label="Remove picture">Remove</button>
+        </div>
+        <div class="row" style="justify-content:center; width:100%; max-width:320px;">
+          <input id="displayName" placeholder="Your name" />
+          <button id="saveName" class="ghost">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Mood Log -->
+    <div class="card">
+      <h2>🙂 Quick Mood Log</h2>
+      <div class="row">
+        <button class="moodBtn" data-val="1" title="Mood 1">😞 1</button>
+        <button class="moodBtn" data-val="2" title="Mood 2">🙁 2</button>
+        <button class="moodBtn" data-val="3" title="Mood 3">😐 3</button>
+        <button class="moodBtn" data-val="4" title="Mood 4">🙂 4</button>
+        <button class="moodBtn" data-val="5" title="Mood 5">😄 5</button>
+      </div>
+      <p class="note" id="lastMoodNote">No mood logged today yet.</p>
+    </div>
+
+    <!-- Mood Trends -->
+    <div class="card">
+      <h2>📊 Mood Trends (Last 7 days)</h2>
+      <canvas id="moodChart" height="160"></canvas>
+    </div>
+
+    <!-- Affirmations -->
+    <div class="card">
+      <h2>🌟 Today's Affirmation</h2>
+      <p id="affirmationText"></p>
+      <p><em id="quoteText"></em></p>
+      <div class="row">
+        <button id="nextAffirmation" title="Next affirmation">Next ➡️</button>
+        <button id="listenAffirmation" title="Listen affirmation">🔊 Listen</button>
+      </div>
+      <input type="text" id="customAffirmation" placeholder="Add your own" />
+      <button id="addAffirmation" class="ghost" title="Add affirmation">Add</button>
+    </div>
+
+    <!-- Gratitude -->
+    <div class="card">
+      <h2>🙏 Gratitude</h2>
+      <textarea id="gratitudeInput" placeholder="What are you grateful for today?"></textarea>
+      <div class="row">
+        <button id="saveGratitude" title="Save gratitude">Save</button>
+        <button id="clearGratitude" class="ghost" title="Clear all gratitude">Clear All</button>
+      </div>
+      <ul id="gratitudeList" class="list"></ul>
+    </div>
+
+    <!-- Quick Journal -->
+    <div class="card">
+      <h2>📖 Quick Journal</h2>
+      <textarea id="journalInput" placeholder="Write a quick thought..."></textarea>
+      <div class="row">
+        <button id="saveJournal" title="Save journal">Save</button>
+        <button id="clearJournal" class="ghost" title="Clear all journals">Clear All</button>
+      </div>
+      <ul id="journalList" class="list"></ul>
+    </div>
+
+    <!-- Breathing -->
+    <div class="card">
+      <h2>🌬️ Breathing Exercise</h2>
+      <div class="breathing-circle" aria-hidden="true"></div>
+      <p style="text-align:center">Inhale... Exhale... Relax</p>
+    </div>
+
+    <!-- Streaks -->
+    <div class="card">
+      <h2>🔥 Streaks</h2>
+      <svg class="progress-ring" viewBox="0 0 120 120" role="img" aria-label="Streak progress">
+        <circle cx="60" cy="60" r="54" stroke="var(--ring-bg)" stroke-width="12" fill="none"/>
+        <circle id="progressCircle" cx="60" cy="60" r="54" stroke="var(--primary)" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="339.292" stroke-dashoffset="339.292"/>
+      </svg>
+      <p id="streakCount" style="text-align:center">You have a 0-day streak!</p>
+    </div>
+
+    <!-- Daily Tip -->
+    <div class="card">
+      <h2>💡 Daily Self-Care Tip</h2>
+      <p id="dailyTip"></p>
+    </div>
+
+    <!-- Calendar -->
+    <div class="card">
+      <h2>📅 Calendar</h2>
+      <div class="row" style="justify-content:space-between;">
+        <button id="prevMonth" class="ghost" title="Previous month">◀️</button>
+        <strong id="calTitle">Month YYYY</strong>
+        <button id="nextMonth" class="ghost" title="Next month">▶️</button>
+      </div>
+      <div class="cal-head">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      </div>
+      <div class="calendar" id="calendar"></div>
+      <p id="calendarInfo" class="note"></p>
+    </div>
+
+    <!-- Music -->
+    <div class="card">
+      <h2>🎶 Relaxation Music</h2>
+      <audio controls loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
+      </audio>
+    </div>
+
+    <!-- Insights -->
+    <div class="card">
+      <h2>🤖 Mood Insight</h2>
+      <p id="moodInsight">Loading your insights...</p>
+    </div>
+
+    <!-- Emergency -->
+    <div class="card">
+      <h2>🚨 Emergency Help</h2>
+      <p>If you are in crisis, please reach out immediately:</p>
+      <ul>
+        <li>India: 9152987821 (Vandrevala Foundation Helpline)</li>
+        <li>Worldwide: <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a></li>
+      </ul>
+    </div>
+
+    <!-- Achievements -->
+    <div class="card">
+      <h2>🏆 Achievements</h2>
+      <div id="badges"></div>
+    </div>
+
+    <!-- Reminders (Configurable) -->
+    <div class="card">
+      <h2>⏰ Reminders</h2>
+      <div class="row">
+        <input id="reminderText" placeholder="Reminder message (e.g., Drink water)" />
+        <select id="reminderEvery" aria-label="Reminder frequency">
+          <option value="15">Every 15 min</option>
+          <option value="30">Every 30 min</option>
+          <option value="60" selected>Every 60 min</option>
+          <option value="120">Every 2 hours</option>
+        </select>
+        <button id="addReminder">Add</button>
+      </div>
+      <ul id="reminderList" class="list"></ul>
+      <p class="note">Reminders run while this page is open.</p>
+    </div>
+
+    <!-- Data Management (Export / Import) -->
+    <div class="card">
+      <h2>📤 Data Management</h2>
+      <div class="row">
+        <button id="exportData" title="Export data">Export Data</button>
+        <button id="importDataBtn" title="Import data">Import Data</button>
+        <input type="file" id="importInput" accept="application/json" hidden />
+      </div>
+      <p class="note">Download a backup of your data or import from a previous backup.</p>
+    </div>
+
+  </div>
+
+<script>
+/* ================= Utilities ================= */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+const todayKey = (d = new Date()) => d.toDateString();
+
+function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+function load(key, fallback){ try{ return JSON.parse(localStorage.getItem(key)) ?? fallback } catch{ return fallback } }
+function toast(msg){ alert(msg); }
+
+// Greeting (uses localStorage.userName from your app)
+(function greeting(){
+  const raw = localStorage.getItem('userName') || 'Friend';
+  const firstName = raw.split(' ')[0];
+  const hours = new Date().getHours();
+  let timeGreeting = hours<12 ? 'Good morning' : hours<18 ? 'Good afternoon' : 'Good evening';
+  $('#greeting').textContent = `${timeGreeting}, ${firstName} ✨`;
+})();
+
+/* ================= Profile ================= */
+(function profile(){
+  const saved = localStorage.getItem('profilePic');
+  if (saved) $('#profilePic').src = saved;
+
+  const existingName = localStorage.getItem('userName') || '';
+  $('#displayName').value = existingName;
+
+  $('#uploadPic').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      $('#profilePic').src = reader.result;
+      localStorage.setItem('profilePic', reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $('#removePic').onclick = ()=>{
+    localStorage.removeItem('profilePic');
+    $('#profilePic').src = 'https://via.placeholder.com/100';
+  };
+
+  $('#saveName').onclick = ()=>{
+    const name = $('#displayName').value.trim();
+    if(!name) return;
+    localStorage.setItem('userName', name);
+    toast('Name saved.');
+    // refresh greeting
+    const first = name.split(' ')[0];
+    const hours = new Date().getHours();
+    const tg = hours<12 ? 'Good morning' : hours<18 ? 'Good afternoon' : 'Good evening';
+    $('#greeting').textContent = `${tg}, ${first} ✨`;
+  };
+})();
+
+/* ================= Dark Mode ================= */
+(function darkMode(){
+  const isDark = localStorage.getItem('darkMode') === 'true';
+  if(isDark) document.body.classList.add('dark');
+  const toggleBtn = $('#toggleDark');
+  const setIcon = () => toggleBtn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  setIcon();
+  toggleBtn.onclick = ()=>{
+    document.body.classList.toggle('dark');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+    setIcon();
+  };
+})();
+
+/* ================= Affirmations ================= */
+(function affirmations(){
+  let affirmations = load('affirmations', [
+    'You are enough just as you are.', 'Every emotion is valid.', 'Take things one step at a time.',
+    'Your mental health matters.', 'Small steps lead to big change.', 'Breathe in calm, breathe out stress.',
+    'You are stronger than you think.', 'Peace begins with you.', 'Progress, not perfection.'
+  ]);
+  const quotes = [
+    'Happiness depends upon ourselves. – Aristotle',
+    'Keep going, everything you need will come at the right time.',
+    'Difficult roads often lead to beautiful destinations.',
+    'One day at a time.',
+    'What you think, you become. – Buddha'
+  ];
+  const dailyKey = 'dailyAffirmation_'+ todayKey();
+  let current = localStorage.getItem(dailyKey) || affirmations[Math.floor(Math.random()*affirmations.length)];
+  localStorage.setItem(dailyKey, current);
+  let idx = Math.max(affirmations.indexOf(current), 0);
+
+  function render(){
+    $('#affirmationText').textContent = affirmations[idx];
+    $('#quoteText').textContent = quotes[idx % quotes.length];
+  }
+  render();
+
+  $('#nextAffirmation').onclick = ()=>{
+    idx = (idx+1) % affirmations.length;
+    localStorage.setItem(dailyKey, affirmations[idx]);
+    render();
+  };
+
+  $('#listenAffirmation').onclick = ()=>{
+    const txt = $('#affirmationText').textContent;
+    if('speechSynthesis' in window){
+      window.speechSynthesis.cancel();
+      const msg = new SpeechSynthesisUtterance(txt);
+      speechSynthesis.speak(msg);
+    } else toast('Text-to-speech is not supported in this browser.');
+  };
+
+  $('#addAffirmation').onclick = ()=>{
+    const c = $('#customAffirmation').value.trim();
+    if(!c) return;
+    affirmations.push(c);
+    save('affirmations', affirmations);
+    idx = affirmations.length-1;
+    $('#customAffirmation').value='';
+    render();
+  };
+})();
+
+/* ================= Mood Data + Chart (Last 7 Days) ================= */
+let moodData = load('moodData', {}); // { dateString: 1..5 }
+const moodBtns = $$('.moodBtn');
+let moodChart;
+
+function setMoodFor(dateStr, val){
+  moodData[dateStr] = val;
+  save('moodData', moodData);
+  updateMoodUI();
+  updateAchievements();
+}
+
+function getLast7(){
+  const arr = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    const k = d.toDateString();
+    const raw = moodData[k];
+    const num = typeof raw === 'number' ? raw : Number(raw || 0);
+    arr.push({ label: d.toLocaleDateString(undefined,{weekday:'short'}), val: num ? num : null});
+  }
+  return arr;
+}
+
+function updateMoodUI(){
+  const k = todayKey();
+  const v = moodData[k];
+  $('#lastMoodNote').textContent = v ? `Today's mood: ${'😞🙁😐🙂😄'[v-1]} (${v}/5)` : 'No mood logged today yet.';
+
+  const data = getLast7();
+  const labels = data.map(d=>d.label);
+  const values = data.map(d=> d.val );
+
+  if(moodChart) moodChart.destroy();
+  const ctx = document.getElementById('moodChart'); // Chart.js v4 accepts canvas element
+  moodChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [{ label: 'Mood', data: values, tension:.35, fill:false, spanGaps:true }] },
+    options: {
+      responsive:true,
+      animation:false,
+      scales: { y: { min:1, max:5, ticks:{ stepSize:1 } } },
+      plugins:{ legend:{ display:false } }
+    }
+  });
+  updateInsight();
+}
+
+moodBtns.forEach(b=> b.addEventListener('click', ()=> setMoodFor(todayKey(), Number(b.dataset.val))));
+updateMoodUI();
+
+function updateInsight(){
+  const arr = getLast7().map(x=>x.val).filter(v=>typeof v==='number');
+  if(arr.length < 2){ $('#moodInsight').textContent = 'Log moods for a few days to see insights.'; return; }
+  const avg = (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(2);
+  const trend = arr[arr.length-1] - arr[0];
+  const dir = trend>0 ? 'rising' : (trend<0 ? 'dipping' : 'stable');
+  $('#moodInsight').textContent = `Avg mood last 7 days: ${avg}/5 · Trend: ${dir}. Keep building small positive habits!`;
+}
+
+/* ================= Gratitude ================= */
+let gratitude = load('gratitude', []); // ["Date: text"]
+function renderGrat(){
+  const list = $('#gratitudeList'); list.innerHTML = '';
+  gratitude.slice().reverse().forEach((g, idx)=>{
+    const li = document.createElement('li');
+    const span = document.createElement('span'); span.textContent = g;
+    const del = document.createElement('button'); del.className='ghost'; del.textContent='🗑️'; del.title='Delete gratitude'; del.setAttribute('aria-label','Delete gratitude');
+    del.onclick = ()=>{
+      const realIdx = gratitude.length-1-idx;
+      gratitude.splice(realIdx,1); save('gratitude', gratitude); renderGrat(); updateAchievements(); renderCalendar();
+    };
+    li.append(span, del); list.appendChild(li);
+  });
+}
+renderGrat();
+$('#saveGratitude').onclick = ()=>{
+  const val = $('#gratitudeInput').value.trim();
+  if(!val) return;
+  gratitude.push(`${todayKey()}: ${val}`); save('gratitude', gratitude);
+  $('#gratitudeInput').value=''; renderGrat(); updateAchievements(); renderCalendar();
+};
+$('#clearGratitude').onclick = ()=>{
+  if(confirm('Clear all gratitude entries?')) { gratitude = []; save('gratitude', gratitude); renderGrat(); renderCalendar(); }
+};
+
+/* ================= Journal ================= */
+let journals = load('journals', []);
+function renderJournal(){
+  const list = $('#journalList'); list.innerHTML = '';
+  journals.slice().reverse().slice(0,20).forEach((j, idx)=>{
+    const li = document.createElement('li');
+    const span = document.createElement('span'); span.textContent = j;
+    const del = document.createElement('button'); del.className='ghost'; del.textContent='🗑️'; del.title='Delete journal'; del.setAttribute('aria-label','Delete journal');
+    del.onclick = ()=>{
+      const realIdx = journals.length-1-idx;
+      journals.splice(realIdx,1); save('journals', journals); renderJournal(); updateAchievements(); renderCalendar();
+    };
+    li.append(span, del); list.appendChild(li);
+  });
+}
+renderJournal();
+$('#saveJournal').onclick = ()=>{
+  const val = $('#journalInput').value.trim();
+  if(!val) return;
+  journals.push(`${todayKey()}: ${val}`); save('journals', journals);
+  $('#journalInput').value=''; renderJournal(); updateAchievements(); renderCalendar();
+};
+$('#clearJournal').onclick = ()=>{
+  if(confirm('Clear all journal entries?')) { journals = []; save('journals', journals); renderJournal(); renderCalendar(); }
+};
+
+/* ================= Streaks ================= */
+(function streaks(){
+  let streak = load('streak', {count:0, lastDate:null});
+  const t = todayKey();
+  if(streak.lastDate !== t){
+    const y = new Date(); y.setDate(y.getDate()-1);
+    if(streak.lastDate === y.toDateString()) streak.count++; else streak.count = 1;
+    streak.lastDate = t; save('streak', streak);
+  }
+  const circle = $('#progressCircle'); const max = 10; const C = 339.292;
+  const offset = Math.max(C - (streak.count/ max)*C, 0); circle.style.strokeDashoffset = offset;
+  $('#streakCount').textContent = `You have a ${streak.count}-day streak!`;
+})();
+
+/* ================= Daily Tips ================= */
+(function tips(){
+  const tips = ["Take a 5-min walk", "Drink water", "Write one positive thought", "Stretch for 2 mins", "Call a friend", "Meditate for 5 mins"];
+  const key = 'dailyTip_'+ todayKey();
+  let tip = localStorage.getItem(key) || tips[Math.floor(Math.random()*tips.length)];
+  localStorage.setItem(key, tip); $('#dailyTip').textContent = tip;
+})();
+
+/* ================= Calendar ================= */
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-11
+
+function entriesOn(date){
+  const dstr = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toDateString();
+  const g = gratitude.filter(x=>x.startsWith(dstr)).length;
+  const j = journals.filter(x=>x.startsWith(dstr)).length;
+  const m = moodData[dstr] ? 1 : 0;
+  return {g,j,m};
+}
+
+function renderCalendar(){
+  const cal = $('#calendar'); cal.innerHTML = '';
+  const title = $('#calTitle');
+  const first = new Date(calYear, calMonth, 1);
+  const last = new Date(calYear, calMonth+1, 0);
+  title.textContent = `${first.toLocaleString(undefined,{month:'long'})} ${calYear}`;
+
+  const startDay = first.getDay();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  // Leading blanks
+  for(let i=startDay-1; i>=0; i--){
+    const d = document.createElement('div'); d.className='day muted'; d.textContent = (daysInPrev - i);
+    cal.appendChild(d);
+  }
+  // Days this month
+  for(let d=1; d<=last.getDate(); d++){
+    const cell = document.createElement('div'); cell.className='day'; cell.textContent = d;
+    const current = new Date(calYear, calMonth, d);
+    const e = entriesOn(current);
+    if(e.g || e.j || e.m) cell.classList.add('has-entry');
+    cell.onclick = ()=>{ $('#calendarInfo').textContent = `${current.toDateString()}: Gratitude(${e.g}), Journal(${e.j}), Mood(${e.m ? 'logged' : '—'})`; };
+    cal.appendChild(cell);
+  }
+  // Trailing blanks to complete grid
+  const cells = cal.children.length;
+  const total = Math.ceil(cells/7)*7;
+  for(let i=0; i<total-cells; i++){
+    const d = document.createElement('div'); d.className='day muted'; d.textContent = (i+1);
+    cal.appendChild(d);
+  }
+}
+renderCalendar();
+$('#prevMonth').onclick = ()=>{ calMonth--; if(calMonth<0){ calMonth=11; calYear--; } renderCalendar(); };
+$('#nextMonth').onclick = ()=>{ calMonth++; if(calMonth>11){ calMonth=0; calYear++; } renderCalendar(); };
+
+/* ================= Achievements ================= */
+function updateAchievements(){
+  const badges = [];
+  const streak = load('streak', {count:0});
+  if(streak.count>=3) badges.push('🔥 3-Day Streak');
+  if(streak.count>=7) badges.push('🔥 1-Week Streak');
+  if(streak.count>=14) badges.push('🔥 2-Week Streak');
+  if(streak.count>=30) badges.push('🔥 30-Day Streak');
+
+  if(gratitude.length>=5) badges.push('🙏 Gratitude Keeper (5)');
+  if(gratitude.length>=20) badges.push('🙏 Gratitude Champ (20)');
+
+  if(journals.length>=3) badges.push('✍️ Journaler');
+  if(journals.length>=15) badges.push('✍️ Consistent Writer');
+
+  const last7 = getLast7().filter(x=>typeof x.val==='number').length;
+  if(last7>=5) badges.push('🙂 Mood Consistency (5/7)');
+
+  $('#badges').innerHTML = badges.map(b=>`<span class="badge">${b}</span>`).join('');
+}
+updateAchievements();
+
+/* ================= Export / Import Data ================= */
+function collectData(){
+  return {
+    affirmations: load('affirmations', []),
+    gratitude,
+    journals,
+    streak: load('streak',{}),
+    moodData,
+    reminders: load('reminders', []),
+    profilePic: localStorage.getItem('profilePic') || null,
+    userName: localStorage.getItem('userName') || null,
+    darkMode: localStorage.getItem('darkMode') === 'true'
+  };
+}
+$('#exportData').onclick = ()=>{
+  const data = collectData();
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mental_health_data.json'; a.click();
+  URL.revokeObjectURL(a.href);
+};
+$('#importDataBtn').onclick = ()=> $('#importInput').click();
+$('#importInput').addEventListener('change', (e)=>{
+  const f = e.target.files[0]; if(!f) return; const r = new FileReader();
+  r.onload = ()=>{ try {
+    const data = JSON.parse(r.result);
+    if(data.affirmations) save('affirmations', data.affirmations);
+    if(data.gratitude) { gratitude = data.gratitude; save('gratitude', gratitude); renderGrat(); }
+    if(data.journals) { journals = data.journals; save('journals', journals); renderJournal(); }
+    if(data.streak) save('streak', data.streak);
+    if(data.moodData) { moodData = data.moodData; save('moodData', moodData); updateMoodUI(); }
+    if('profilePic' in data && data.profilePic){ localStorage.setItem('profilePic', data.profilePic); $('#profilePic').src = data.profilePic; }
+    if('userName' in data && data.userName){ localStorage.setItem('userName', data.userName); $('#displayName').value = data.userName; }
+    if('darkMode' in data){ localStorage.setItem('darkMode', data.darkMode); document.body.classList.toggle('dark', !!data.darkMode); }
+    if(Array.isArray(data.reminders)){ save('reminders', data.reminders); reminders = data.reminders; renderReminders(); stopAllReminders(); reminders.filter(x=>x.active).forEach(startReminder); }
+    renderCalendar(); updateAchievements(); toast('Data imported successfully.');
+  } catch(err){ console.error(err); toast('Invalid file.'); }
+  };
+  r.readAsText(f);
+});
+
+/* ================= Reminders (Notifications) ================= */
+let reminders = load('reminders', []); // [{text, everyMin, active}]
+let reminderTimers = [];
+
+function canNotify(){
+  return ('Notification' in window) && Notification.permission === 'granted';
+}
+async function ensureNotifyPermission(){
+  if(!('Notification' in window)) return false;
+  if(Notification.permission === 'granted') return true;
+  if(Notification.permission === 'denied') return false;
+  const p = await Notification.requestPermission();
+  return p === 'granted';
+}
+function notify(text){
+  if(canNotify()){
+    new Notification(text);
+  } else {
+    // If tab hidden, alerts can be missed; still use as fallback
+    alert(`⏰ ${text}`);
+  }
+}
+function startReminder(rem){
+  const ms = rem.everyMin*60*1000;
+  // fire immediately once to confirm
+  setTimeout(()=>{ if(rem.active) notify(rem.text); }, 100);
+  const id = setInterval(()=>{ if(rem.active) notify(rem.text); }, ms);
+  reminderTimers.push(id);
+}
+function stopAllReminders(){ reminderTimers.forEach(clearInterval); reminderTimers = []; }
+function renderReminders(){
+  const list = $('#reminderList'); list.innerHTML = '';
+  reminders.forEach((r,i)=>{
+    const li = document.createElement('li');
+    const span = document.createElement('span'); span.textContent = `${r.text} · every ${r.everyMin} min ${r.active?'(on)':'(off)'}`;
+    const toggle = document.createElement('button'); toggle.className='ghost'; toggle.textContent = r.active?'⏸️':'▶️'; toggle.title = r.active?'Pause reminder':'Start reminder'; toggle.setAttribute('aria-label', toggle.title);
+    toggle.onclick = ()=>{ r.active = !r.active; save('reminders', reminders); renderReminders(); stopAllReminders(); reminders.filter(x=>x.active).forEach(startReminder); };
+    const del = document.createElement('button'); del.className='ghost'; del.textContent='🗑️'; del.title='Delete reminder'; del.setAttribute('aria-label','Delete reminder');
+    del.onclick = ()=>{ reminders.splice(i,1); save('reminders', reminders); renderReminders(); stopAllReminders(); reminders.filter(x=>x.active).forEach(startReminder); };
+    li.append(span, toggle, del); list.appendChild(li);
+  });
+}
+
+$('#addReminder').onclick = async ()=>{
+  const text = $('#reminderText').value.trim(); const mins = Number($('#reminderEvery').value);
+  if(!text) return;
+  const granted = await ensureNotifyPermission();
+  if(!granted) toast('Notifications disabled by browser — using alerts instead.');
+  reminders.push({text, everyMin: mins, active: true}); save('reminders', reminders);
+  $('#reminderText').value=''; renderReminders(); stopAllReminders(); reminders.filter(x=>x.active).forEach(startReminder);
+};
+renderReminders();
+ensureNotifyPermission().finally(()=>{
+  stopAllReminders();
+  reminders.filter(x=>x.active).forEach(startReminder);
+});
+
+/* Pause notifications when page not visible (optional nicer behavior) */
+document.addEventListener('visibilitychange', ()=>{
+  stopAllReminders();
+  if(!document.hidden){
+    reminders.filter(x=>x.active).forEach(startReminder);
+  }
+});
+
+/* ================= Init ================= */
+updateAchievements();
+</script>
+</body>
+</html>

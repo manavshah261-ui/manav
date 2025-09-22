@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mood Tracker | Mental Health System</title>
+  <style>
+    :root{
+      --bg:#f5f9ff;
+      --card:#fff;
+      --text:#1e1e1e;
+      --muted:#556;
+      --primary:#4caf50;
+      --primary-dark:#388e3c;
+      --accent:#1976d2;
+      --soft:#f0f4f8;
+    }
+    body.dark{
+      --bg:#121212;
+      --card:#1e1e1e;
+      --text:#ededed;
+      --muted:#aab;
+      --soft:#1a1f25;
+    }
+
+    *{box-sizing:border-box}
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      transition: background .3s,color .3s;
+    }
+
+    header {
+      background: linear-gradient(to right, #81c784, #66bb6a);
+      padding: 28px 16px;
+      color: white;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    }
+
+    .bar-actions{
+      position:absolute;
+      right:10px; top:10px;
+      display:flex; gap:8px;
+    }
+    .btn {
+      padding: 10px 14px;
+      background-color: var(--primary);
+      border: none;
+      color: white;
+      font-size: 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.25s, transform .1s;
+    }
+    .btn:hover { background-color: var(--primary-dark); }
+    .btn:active { transform: translateY(1px) }
+    .btn.ghost { background: transparent; color: #fff; border:1px solid rgba(255,255,255,.6); }
+    .btn.accent { background: var(--accent); }
+    .btn.danger { background: #e53935; }
+    .btn.danger:hover { background:#c62828; }
+
+    main {
+      max-width: 860px;
+      margin: 32px auto;
+      background: var(--card);
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+
+    h2 {
+      color: #2e7d32;
+      margin: 0 0 18px;
+      text-align: center;
+    }
+
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .stack{display:flex; flex-direction:column; gap:12px}
+
+    .mood-options {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 10px;
+    }
+    .mood-pill{
+      display:flex; align-items:center; gap:8px;
+      padding: 8px 10px; border-radius:10px; cursor:pointer;
+      border:1px solid rgba(0,0,0,.12); background: var(--soft);
+      transition: transform .1s, background .2s;
+      user-select:none;
+    }
+    .mood-pill:hover{ transform: translateY(-1px); }
+    .mood-options input{ display:none; }
+    .mood-options input:checked + span{
+      background:#c8e6c9; border-radius:8px; padding:3px 8px;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      margin-bottom: 12px;
+      resize: vertical;
+      background: transparent;
+      color: inherit;
+    }
+
+    .section-card{
+      background: var(--soft);
+      padding: 14px;
+      border-radius: 10px;
+      margin-top: 18px;
+    }
+
+    .entry {
+      margin-top: 14px;
+      background: var(--soft);
+      padding: 14px;
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+    }
+
+    .entry-date { font-weight: 600; font-size: 14px; color: var(--muted); }
+    .entry-note { margin-top: 6px; white-space: pre-wrap; }
+
+    a.back-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 16px;
+      background-color: var(--primary);
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background-color 0.25s, transform .1s;
+    }
+    a.back-btn:hover { background-color: var(--primary-dark); }
+
+    canvas { margin-top: 20px; max-width: 100%; }
+
+    #moodSummary { margin-top: 18px; padding: 14px; background: #e8f5e9; border-radius: 10px; }
+    #moodSummary h3 { color: #2e7d32; margin: 0 0 8px; }
+    .toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px; }
+
+    /* special color for PDF button */
+    .pdf-btn{ background: var(--accent); }
+    .pdf-btn:hover{ background:#125aa8; }
+
+    input[type=file]{
+      display:none;
+    }
+    .file-label{
+      padding:10px 14px; border-radius:8px; border:1px dashed rgba(0,0,0,.3);
+      cursor:pointer; background:transparent; color:inherit;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Mental Health Support System</h1>
+    <p>with Mood Tracker</p>
+    <div class="bar-actions">
+      <button id="darkToggle" class="btn ghost" title="Toggle dark mode">🌙</button>
+      <a href="home.html" class="btn ghost" title="Back to Home">← Home</a>
+    </div>
+  </header>
+
+  <main>
+    <h2>📝 Mood Tracker</h2>
+
+    <form id="moodForm" class="stack" autocomplete="off">
+      <div class="mood-options">
+        <label class="mood-pill">
+          <input type="radio" name="mood" value="1" required>
+          <span>😞</span>
+        </label>
+        <label class="mood-pill">
+          <input type="radio" name="mood" value="2">
+          <span>😐</span>
+        </label>
+        <label class="mood-pill">
+          <input type="radio" name="mood" value="3">
+          <span>🙂</span>
+        </label>
+        <label class="mood-pill">
+          <input type="radio" name="mood" value="4">
+          <span>😁</span>
+        </label>
+      </div>
+
+      <textarea id="moodNote" placeholder="Optional: Write something about your day..."></textarea>
+      <div class="row">
+        <button type="submit" class="btn">Save Mood</button>
+        <button type="button" id="clearAll" class="btn danger" title="Delete all entries">Clear All</button>
+      </div>
+    </form>
+
+    <div id="moodSummary" class="section-card">
+      <h3>Mood Summary</h3>
+      <p id="avgMood">Average Mood: -</p>
+      <p id="frequentMood">Most Frequent Mood: -</p>
+      <p id="totalEntries">Total Entries: 0</p>
+    </div>
+
+    <canvas id="moodChart"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+
+    <div class="toolbar">
+      <button class="btn pdf-btn" id="pdfBtn" onclick="downloadMoodPDF()">📄 Download PDF</button>
+      <button class="btn" id="exportJson">📤 Export JSON</button>
+      <label class="file-label" for="importJson">📥 Import JSON</label>
+      <input id="importJson" type="file" accept="application/json" />
+    </div>
+
+    <div id="moodEntries" class="section-card"></div>
+
+    <a class="back-btn" href="home.html">← Back to Home</a>
+  </main>
+
+  <script>
+    // ---------- Utilities ----------
+    const $ = (s)=>document.querySelector(s);
+    const $$ = (s)=>Array.from(document.querySelectorAll(s));
+
+    const MOOD_KEY = 'moodLogs';
+
+    function getMoodData() {
+      try { return JSON.parse(localStorage.getItem(MOOD_KEY)) || []; }
+      catch { return []; }
+    }
+    function saveMoodData(data) {
+      localStorage.setItem(MOOD_KEY, JSON.stringify(data));
+    }
+    function toast(msg){ alert(msg); }
+
+    // ---------- Dark Mode ----------
+    (function darkMode(){
+      const key='darkMode';
+      const initial = localStorage.getItem(key);
+      if(initial === 'true' || (initial===null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)){
+        document.body.classList.add('dark');
+      }
+      $('#darkToggle').onclick = ()=>{
+        document.body.classList.toggle('dark');
+        localStorage.setItem(key, document.body.classList.contains('dark'));
+      };
+    })();
+
+    // ---------- Renderers ----------
+    let chartInstance = null;
+
+    function renderMoodChart() {
+      const entries = getMoodData();
+      const canvas = document.getElementById('moodChart');
+
+      if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+      if (entries.length === 0) return;
+
+      const labels = entries.map(e => new Date(e.date).toLocaleDateString());
+      const data = entries.map(e => e.mood);
+
+      const ctx = canvas.getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Mood Level Over Time',
+            data,
+            borderColor: '#4caf50',
+            backgroundColor: 'rgba(76,175,80,0.2)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true,
+            pointRadius: 4,
+            pointBackgroundColor: '#4caf50'
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display:false } },
+          scales: {
+            y: {
+              min: 1, max: 4, ticks: {
+                stepSize: 1,
+                callback: (v)=>(['😞','😐','🙂','😁'][v-1])
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateDashboardSummary(avg, frequent, total) {
+      const summary = { avg, frequent, total };
+      localStorage.setItem("moodSummary", JSON.stringify(summary));
+    }
+
+    function displayMoodSummary() {
+      const entries = getMoodData();
+      const avgEl = $("#avgMood");
+      const freqEl = $("#frequentMood");
+      const totalEl = $("#totalEntries");
+
+      if (entries.length === 0) {
+        avgEl.textContent = "Average Mood: -";
+        freqEl.textContent = "Most Frequent Mood: -";
+        totalEl.textContent = "Total Entries: 0";
+        updateDashboardSummary("-", "-", 0);
+        return;
+      }
+
+      const avg = entries.reduce((s,e)=>s+e.mood,0) / entries.length;
+      const avgEmoji = ['😞','😐','🙂','😁'][Math.round(avg)-1];
+
+      const counts = entries.reduce((m,e)=>{ m[e.mood]=(m[e.mood]||0)+1; return m; },{});
+      const most = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0]*1;
+      const frequentEmoji = ['😞 Sad','😐 Okay','🙂 Good','😁 Great'][most-1];
+
+      avgEl.textContent = `Average Mood: ${avg.toFixed(2)} ${avgEmoji}`;
+      freqEl.textContent = `Most Frequent Mood: ${frequentEmoji}`;
+      totalEl.textContent = `Total Entries: ${entries.length}`;
+
+      updateDashboardSummary(`${avg.toFixed(2)} ${avgEmoji}`, frequentEmoji, entries.length);
+    }
+
+    function displayMoodEntries() {
+      const container = $('#moodEntries');
+      const data = getMoodData();
+      container.innerHTML = '';
+
+      if (data.length === 0) {
+        container.innerHTML = '<p style="margin:0;color:var(--muted);">No entries yet. Save your first mood above.</p>';
+        renderMoodChart();
+        displayMoodSummary();
+        return;
+      }
+
+      const title = document.createElement('h3');
+      title.textContent = 'Previous Moods';
+      title.style.margin = '0 0 8px';
+      container.appendChild(title);
+
+      // render newest first, but preserve trueIndex on each row
+      data.slice().reverse().forEach((entry, iReversed) => {
+        const trueIndex = data.length - 1 - iReversed;
+        const wrap = document.createElement('div');
+        wrap.className = 'entry';
+        wrap.dataset.index = trueIndex;
+
+        const date = new Date(entry.date).toLocaleString();
+        wrap.innerHTML = `
+          <div class="entry-date">${date} — ${entry.emoji}</div>
+          ${entry.note ? `<div class="entry-note">${escapeHtml(entry.note)}</div>` : ``}
+          <div class="row" style="margin-top:8px">
+            <button class="btn danger btn-del" type="button">🗑️ Delete</button>
+          </div>
+        `;
+        container.appendChild(wrap);
+      });
+
+      // attach delete handlers
+      container.querySelectorAll('.btn-del').forEach(btn=>{
+        btn.onclick = (e)=>{
+          const card = e.currentTarget.closest('.entry');
+          const idx = Number(card.dataset.index);
+          deleteMoodEntry(idx);
+        };
+      });
+
+      renderMoodChart();
+      displayMoodSummary();
+    }
+
+    function escapeHtml(str){
+      return str.replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[s]));
+    }
+
+    // ---------- Actions ----------
+    const form = document.getElementById('moodForm');
+
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const selected = document.querySelector('input[name="mood"]:checked');
+      if(!selected) return;
+
+      const mood = parseInt(selected.value,10);
+      const emojiMap = {1:'😞 Sad',2:'😐 Okay',3:'🙂 Good',4:'😁 Great'};
+      const note = $('#moodNote').value.trim();
+
+      const newEntry = {
+        date: new Date().toISOString(),
+        mood,
+        emoji: emojiMap[mood],
+        note
+      };
+
+      const logs = getMoodData();
+      logs.push(newEntry);
+      saveMoodData(logs);
+
+      form.reset();
+      displayMoodEntries();
+    });
+
+    function deleteMoodEntry(index){
+      const logs = getMoodData();
+      if(index<0 || index>=logs.length) return;
+      if(confirm('Delete this mood entry?')){
+        logs.splice(index,1);
+        saveMoodData(logs);
+        displayMoodEntries();
+      }
+    }
+
+    // Clear all
+    $('#clearAll').onclick = ()=>{
+      if(confirm('This will delete ALL mood entries. Continue?')){
+        saveMoodData([]);
+        displayMoodEntries();
+      }
+    };
+
+    // Export / Import
+    $('#exportJson').onclick = ()=>{
+      const data = getMoodData();
+      const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'mood_logs.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+    $('#importJson').addEventListener('change', (e)=>{
+      const f = e.target.files[0];
+      if(!f) return;
+      const r = new FileReader();
+      r.onload = ()=>{
+        try{
+          const data = JSON.parse(r.result);
+          if(!Array.isArray(data)) throw new Error('Invalid file');
+          // light validation of entries
+          const sanitized = data.map(x=>({
+            date: new Date(x.date).toISOString(),
+            mood: Math.min(4, Math.max(1, Number(x.mood)||1)),
+            emoji: (['😞 Sad','😐 Okay','🙂 Good','😁 Great'][Math.min(3, Math.max(0, (Number(x.mood)||1)-1))]),
+            note: String(x.note||'')
+          }));
+          saveMoodData(sanitized);
+          e.target.value = '';
+          toast('Imported successfully.');
+          displayMoodEntries();
+        }catch(err){
+          toast('Import failed: invalid file.');
+        }
+      };
+      r.readAsText(f);
+    });
+
+    // initial render
+    window.addEventListener('load', displayMoodEntries);
+
+    // ---------- PDF ----------
+    async function downloadMoodPDF() {
+      const moodSection = document.querySelector("main");
+      // html2canvas handles only what’s visible; ensure header isn’t obstructing
+      html2canvas(moodSection, { scrollY: -window.scrollY, useCORS: true }).then(canvas=>{
+        const imgData = canvas.toDataURL("image/png");
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF("p", "mm", "a4");
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pageWidth - 20; // 10mm margin each side
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        let y = 10;
+        if (pdfHeight <= pageHeight - 20) {
+          pdf.addImage(imgData, "PNG", 10, y, pdfWidth, pdfHeight);
+        } else {
+          // paginate if the content is long
+          let position = 0;
+          const pageCanvas = document.createElement('canvas');
+          const ratio = imgProps.width / pdfWidth;
+          const sliceHeightPx = ((pageHeight - 20) * ratio); // visible per page in px
+
+          while (position < imgProps.height) {
+            const slice = Math.min(sliceHeightPx, imgProps.height - position);
+            pageCanvas.width = imgProps.width;
+            pageCanvas.height = slice;
+
+            const ctx = pageCanvas.getContext('2d');
+            ctx.drawImage(canvas, 0, position, imgProps.width, slice, 0, 0, imgProps.width, slice);
+            const pageImg = pageCanvas.toDataURL('image/png');
+
+            if (position > 0) pdf.addPage();
+            pdf.addImage(pageImg, 'PNG', 10, 10, pdfWidth, (slice / ratio));
+            position += sliceHeightPx;
+          }
+        }
+        pdf.save("Mood_Tracker_Report.pdf");
+      });
+    }
+    window.downloadMoodPDF = downloadMoodPDF; // expose for onclick
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-JtR3kHc0JvGf6kB+4oN6G7R3Q1bWwT2D7C3mGmF+8hL7t2U9Wg7C6m1Wgk4qE9mXGQFfBf8bqU9Ue7yPTy7E1w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNa5u6HcJ2h1q1X6/4e1o5M9aG5Jx5zq1O4Hq2XG8g0wq1u7qV7Wg0wYpL7WmK3yq9k2bR9v3v9xgWw2zq8H7w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</body>
+</html>

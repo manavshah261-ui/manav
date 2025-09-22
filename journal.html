@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Journal | Mental Health Support System</title>
+<style>
+  :root {
+    --primary: #4cafef;
+    --primary-dark: #388ecf;
+    --bg: #f5f9ff;
+    --text: #222;
+    --card: #fff;
+    --muted: #666;
+    --soft: #e9eef7;
+  }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    transition: .25s background, .25s color;
+  }
+  body.dark {
+    --bg: #121212;
+    --text: #f0f0f0;
+    --card: #1e1e1e;
+    --soft: #242424;
+  }
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header h1 { font-size: 20px; margin:0; text-align:center; }
+  .top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  button, .button {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  button:hover, .button:hover { background: var(--primary-dark); }
+  .ghost { background: transparent; color: inherit; border: 1px solid rgba(0,0,0,.15); }
+  body.dark .ghost { border-color: rgba(255,255,255,.2); }
+  .container {
+    max-width: 980px;
+    margin: 20px auto;
+    padding: 0 16px;
+    display: grid;
+    gap: 16px;
+  }
+  .card { background: var(--card); border-radius: 14px; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,.08); }
+  .form-group { display: flex; flex-direction: column; margin-bottom: 12px; }
+  label { margin-bottom: 4px; font-weight: 600; }
+  input, textarea, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background: inherit; color: inherit; font-size: 14px; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(76,175,239,.2); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+  .list { display: grid; gap: 10px; margin-top: 8px; }
+  .item { background: var(--soft); border-radius: 10px; padding: 12px; }
+  .item h4 { margin:0 0 6px; font-size: 15px; opacity: .85; }
+  .item .meta { font-size: 12px; opacity: .65; margin-bottom: 8px; }
+  .item .actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .pill { display:inline-block; background:#ffd54f; color:#663c00; border-radius:999px; padding:2px 8px; font-size:12px; margin-left:6px; }
+  .note { font-size: 12px; opacity:.7; }
+  .counter { font-size:12px; opacity:.7; align-self:flex-end; }
+  .favorite { background: #ffcc80; color: #663c00; font-weight:bold; }
+  
+</style>
+</head>
+
+<body>
+<header>
+  <h1>📖 Personal Journal</h1>
+  <div class="top-actions">
+    <button id="toggleDark" title="Toggle dark mode">🌙</button>
+    <a href="home.html" class="button">← Back</a>
+    <button id="printBtn" class="ghost">🖨️ Print</button>
+    <button id="exportBtn" class="button">💾 Export</button>
+    <input type="file" id="importInput" style="display:none;">
+    <button id="importBtn" class="button">📂 Import</button>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Compose Entry -->
+  <div class="card">
+    <div class="row" style="justify-content: space-between; margin-bottom:10px;">
+      <h2 style="margin:0;">New Entry</h2>
+      <span id="draftStatus" class="note">Draft saved</span>
+    </div>
+
+    <div class="form-group">
+      <label for="entryTitle">Title</label>
+      <input id="entryTitle" placeholder="Enter title (optional)">
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label for="entryDate">Date</label>
+        <input id="entryDate" type="date">
+      </div>
+      <div class="form-group">
+        <label for="entryMood">Mood</label>
+        <select id="entryMood">
+          <option value="">Select mood</option>
+          <option value="😊">😊 Happy</option>
+          <option value="😔">😔 Sad</option>
+          <option value="😡">😡 Angry</option>
+          <option value="😌">😌 Calm</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="entryTags">Tags</label>
+      <input id="entryTags" placeholder="Comma-separated tags">
+    </div>
+
+    <div class="form-group">
+      <label for="entryText">Entry</label>
+      <textarea id="entryText" rows="6" placeholder="Write your thoughts..."></textarea>
+    </div>
+
+    <div class="row" style="justify-content: space-between;">
+      <span id="counter" class="counter">0 words · 0 chars</span>
+      <div class="row">
+        <button id="saveEntry">Save</button>
+        <button id="clearDraft" class="ghost">Clear</button>
+      </div>
+    </div>
+    <p class="note">Autosaves locally while you type.</p>
+  </div>
+
+  <!-- Entries List -->
+  <div class="card">
+    <div class="row" style="justify-content: space-between;">
+      <h2 style="margin:0;">Entries</h2>
+      <span id="count" class="muted">0 entries</span>
+    </div>
+    <div id="list" class="list"></div>
+  </div>
+</div>
+
+<script>
+/* ======= Utility ======= */
+const $ = s => document.querySelector(s);
+const todayISO = () => new Date().toISOString().slice(0,10);
+function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+function load(k,f){ try{ return JSON.parse(localStorage.getItem(k)) ?? f }catch{ return f } }
+function toast(m){ alert(m); }
+
+/* ======= Dark Mode ======= */
+(function(){
+  const btn = $('#toggleDark');
+  const isDark = localStorage.getItem('darkMode') === 'true';
+  document.body.classList.toggle('dark', isDark);
+  const setIcon = ()=> btn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  setIcon();
+  btn.onclick = ()=>{ document.body.classList.toggle('dark'); localStorage.setItem('darkMode', document.body.classList.contains('dark')); setIcon(); };
+})();
+
+/* ======= Journal Data ======= */
+let v2 = load('journals_v2', []);
+const draftKey = 'journal_draft_v1';
+let editingId = null;
+
+/* ======= Draft Handling ======= */
+const entryTitle = $('#entryTitle'), entryDate = $('#entryDate'), entryText = $('#entryText');
+const entryTags = $('#entryTags'), entryMood = $('#entryMood');
+const draftStatus = $('#draftStatus'), counterEl = $('#counter');
+
+function updateCounter(){
+  const txt = entryText.value;
+  const words = (txt.trim().match(/\S+/g) || []).length;
+  counterEl.textContent = `${words} ${words===1?'word':'words'} · ${txt.length} chars`;
+}
+
+function saveDraft(){
+  const draft = { title: entryTitle.value, dateISO: entryDate.value, text: entryText.value, tags: entryTags.value, mood: entryMood.value, editingId };
+  save(draftKey, draft);
+  draftStatus.textContent = 'Draft saved';
+}
+
+function loadDraft(){
+  const d = load(draftKey, null);
+  if(d){
+    entryTitle.value = d.title || '';
+    entryDate.value = d.dateISO || todayISO();
+    entryText.value = d.text || '';
+    entryTags.value = d.tags || '';
+    entryMood.value = d.mood || '';
+    editingId = d.editingId || null;
+  } else entryDate.value = todayISO();
+  updateCounter();
+}
+
+function clearDraft(){
+  localStorage.removeItem(draftKey);
+  entryTitle.value = '';
+  entryDate.value = todayISO();
+  entryText.value = '';
+  entryTags.value = '';
+  entryMood.value = '';
+  editingId = null;
+  updateCounter();
+  draftStatus.textContent = 'Draft cleared';
+}
+
+entryText.addEventListener('input', ()=> { updateCounter(); saveDraft(); });
+entryTitle.addEventListener('input', saveDraft);
+entryDate.addEventListener('input', saveDraft);
+entryTags.addEventListener('input', saveDraft);
+entryMood.addEventListener('change', saveDraft);
+$('#clearDraft').onclick = clearDraft;
+loadDraft();
+
+/* ======= Rendering ======= */
+const listEl = $('#list'), countEl = $('#count');
+
+function escapeHTML(s){ return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+function renderList(items){
+  listEl.innerHTML = '';
+  countEl.textContent = `${items.length} ${items.length===1?'entry':'entries'}`;
+  if(!items.length){ listEl.innerHTML = `<div class="item"><div class="meta">No entries yet.</div></div>`; return; }
+  items.sort((a,b)=>new Date(b.dateISO) - new Date(a.dateISO)); // newest first
+  items.forEach(it=>{
+    const div = document.createElement('div');
+    div.className = 'item';
+    const dateNice = new Date(it.dateISO).toDateString();
+    const favoriteClass = it.favorite ? 'favorite' : '';
+    const tagsHTML = it.tags ? `<span class="pill">${escapeHTML(it.tags)}</span>` : '';
+    const moodHTML = it.mood ? `<span class="pill">${escapeHTML(it.mood)}</span>` : '';
+    div.innerHTML = `
+      <h4 class="${favoriteClass}">${escapeHTML(it.title||'Untitled')} ${tagsHTML}${moodHTML}<span class="pill">${dateNice}</span></h4>
+      <div class="meta">Last updated: ${new Date(it.updatedAt).toLocaleString()}</div>
+      <div class="text">${escapeHTML(it.text).replace(/\n/g,'<br/>')}</div>
+      <div class="actions">
+        <button class="ghost" data-action="edit">✏️ Edit</button>
+        <button class="ghost" data-action="copy">📋 Copy</button>
+        <button class="ghost" data-action="delete">🗑️ Delete</button>
+        <button class="ghost" data-action="favorite">${it.favorite?'⭐ Unfavorite':'⭐ Favorite'}</button>
+      </div>`;
+    div.querySelector('[data-action="edit"]').onclick = ()=> startEdit(it.id);
+    div.querySelector('[data-action="copy"]').onclick = ()=> navigator.clipboard.writeText(it.text).then(()=>toast('Copied'));
+    div.querySelector('[data-action="delete"]').onclick = ()=> deleteEntry(it.id);
+    div.querySelector('[data-action="favorite"]').onclick = ()=> toggleFavorite(it.id);
+    listEl.appendChild(div);
+  });
+}
+
+/* ======= Save / Edit ======= */
+function persistV2(){ save('journals_v2', v2); }
+
+$('#saveEntry').onclick = ()=>{
+  const t = entryText.value.trim();
+  const dateISO = entryDate.value || todayISO();
+  const title = entryTitle.value.trim();
+  const tags = entryTags.value.trim();
+  const mood = entryMood.value;
+  if(!t){ toast('Please write something before saving.'); return; }
+  const now = new Date().toISOString();
+  if(editingId){
+    const idx = v2.findIndex(e=>e.id===editingId);
+    if(idx>=0) v2[idx] = {...v2[idx], dateISO, title, text:t, updatedAt: now, tags, mood};
+  } else {
+    v2.push({ id:'j'+Date.now(), dateISO, title, text:t, createdAt: now, updatedAt: now, tags, mood, favorite:false });
+  }
+  persistV2();
+  clearDraft();
+  renderList(v2);
+  toast('Entry saved.');
+};
+
+function startEdit(id){
+  const it = v2.find(e=>e.id===id);
+  if(!it) return;
+  entryTitle.value = it.title||'';
+  entryDate.value = it.dateISO||todayISO();
+  entryText.value = it.text||'';
+  entryTags.value = it.tags||'';
+  entryMood.value = it.mood||'';
+  editingId = it.id;
+  saveDraft();
+  updateCounter();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function deleteEntry(id){
+  if(confirm('Delete this entry?')) v2 = v2.filter(e=>e.id!==id);
+  persistV2();
+  renderList(v2);
+}
+
+function toggleFavorite(id){
+  const it = v2.find(e=>e.id===id);
+  if(!it) return;
+  it.favorite = !it.favorite;
+  persistV2();
+  renderList(v2);
+}
+
+/* ======= Export / Import ======= */
+$('#exportBtn').onclick = ()=>{
+  const blob = new Blob([JSON.stringify({journals_v2:v2},null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='journal_backup.json'; a.click(); URL.revokeObjectURL(a.href);
+};
+$('#importBtn').onclick = ()=> $('#importInput').click();
+$('#importInput').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=> {
+    try{
+      const data = JSON.parse(r.result);
+      if(Array.isArray(data.journals_v2)) v2 = data.journals_v2;
+      persistV2(); renderList(v2); toast('Import completed.');
+    }catch{ toast('Invalid file.'); }
+  };
+  r.readAsText(f);
+});
+
+/* ======= Print ======= */
+$('#printBtn').onclick = ()=> window.print();
+
+/* ======= Initial Render ======= */
+renderList(v2);
+</script>
+</body>
+</html>

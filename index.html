@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mental Health Support System — Login</title>
+  <style>
+    :root{
+      --bg: #f5f9ff;
+      --card: #fff;
+      --primary: #4caf50;
+      --primary-dark: #388e3c;
+      --text: #222;
+      --muted: #666;
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+      --radius: 12px;
+      --accent: #1976d2;
+      font-family: Inter, "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial;
+    }
+    body.dark{ --bg: #121212; --card: #1e1e1e; --text: #eee; --muted:#aaa; --shadow: none; }
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; margin:0; background:var(--bg); color:var(--text); }
+    .wrap{
+      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:28px;
+    }
+    .panel{
+      width:100%; max-width:460px; background:var(--card); border-radius:var(--radius);
+      box-shadow: var(--shadow); padding:28px; transition:transform .12s;
+    }
+    header{ text-align:center; margin-bottom:18px; }
+    header h1{ margin:0; font-size:20px; color:var(--primary-dark); }
+    header p{ margin:6px 0 0; font-size:14px; color:var(--muted); }
+
+    .tabs{ display:flex; gap:8px; margin:18px 0; }
+    .tab{ flex:1; padding:10px 12px; border-radius:10px; background:transparent; border:1px solid rgba(0,0,0,.06); cursor:pointer; text-align:center; }
+    .tab.active{ background: linear-gradient(90deg,var(--primary),var(--primary-dark)); color:#fff; border:none; }
+
+    form { display:block; }
+    label{ display:block; margin-top:10px; font-size:13px; color:var(--muted); }
+    input[type="text"], input[type="email"], input[type="password"], input[type="date"], select, textarea {
+      width:100%; padding:10px 12px; border-radius:8px; border:1px solid #dcdcdc; margin-top:6px;
+      font-size:15px; background:transparent; color:inherit;
+    }
+    textarea{ min-height:90px; resize:vertical; }
+
+    .row{ display:flex; gap:8px; align-items:center; margin-top:10px; }
+    .checkbox-label{ font-size:13px; color:var(--muted); display:flex; gap:8px; align-items:center; }
+
+    button.primary{
+      width:100%; margin-top:14px; padding:12px; border-radius:10px; background:var(--primary);
+      color:#fff; border:none; font-weight:600; cursor:pointer;
+    }
+    button.ghost{ background:transparent; border:1px solid rgba(0,0,0,.08); color:inherit; padding:8px 10px; border-radius:8px; cursor:pointer; }
+
+    .message{ margin-top:12px; font-size:14px; min-height:20px; }
+    .message.error{ color:#e53935; }
+    .message.success{ color:#2e7d32; }
+
+    .small-link{ color:var(--accent); cursor:pointer; text-decoration:underline; font-size:13px; }
+
+    .password-toggle{ font-size:13px; color:var(--muted); cursor:pointer; user-select:none; }
+
+    meter{ width:100%; height:10px; margin-top:8px; }
+
+    .theme-toggle{
+      position:fixed; right:16px; top:16px; background:#fff; border-radius:50%; width:40px; height:40px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08); border:none; cursor:pointer; font-size:16px;
+    }
+    body.dark .theme-toggle{ background:#222; color:#fff; box-shadow:none; }
+
+    @media (max-width:480px){
+      .panel{ padding:18px; }
+      header h1{ font-size:18px; }
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+
+  <div class="wrap">
+    <div class="panel" role="main" aria-labelledby="appTitle">
+      <header>
+        <h1 id="appTitle">Mental Health Support System</h1>
+        <p>with Mood Tracker — sign in to continue</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Authentication">
+        <div class="tab active" id="tab-login" role="tab" aria-selected="true" onclick="showSection('login-section', this)">Login</div>
+        <div class="tab" id="tab-register" role="tab" aria-selected="false" onclick="showSection('register-section', this)">Register</div>
+        <div class="tab" id="tab-forgot" role="tab" aria-selected="false" onclick="showSection('forgot-section', this)">Forgot</div>
+      </div>
+
+      <!-- LOGIN -->
+      <section id="login-section" class="section active" aria-hidden="false">
+        <h2 style="margin:0 0 8px;">Welcome back 👋</h2>
+        <form id="loginForm" onsubmit="handleLogin(event)" autocomplete="on" novalidate>
+          <label for="email">Email</label>
+          <input id="email" type="email" required placeholder="you@example.com" />
+
+          <label for="password">Password</label>
+          <input id="password" type="password" required placeholder="Your password" />
+          <div class="row" style="justify-content:space-between;">
+            <label class="checkbox-label"><input type="checkbox" id="rememberMe" /> Remember me</label>
+            <label class="password-toggle"><input type="checkbox" onclick="togglePassword('password')"> Show</label>
+          </div>
+
+          <button class="primary" type="submit">Login</button>
+          <p class="message" id="login-message" aria-live="polite"></p>
+
+          <div style="display:flex; justify-content:space-between; gap:10px; margin-top:10px;">
+            <a class="small-link" onclick="showSection('register-section', document.getElementById('tab-register'))">Create account</a>
+            <a class="small-link" onclick="showSection('forgot-section', document.getElementById('tab-forgot'))">Forgot password?</a>
+          </div>
+        </form>
+      </section>
+
+      <!-- REGISTER -->
+      <section id="register-section" class="section" aria-hidden="true" style="display:none;">
+        <h2 style="margin:0 0 8px;">Create account ✨</h2>
+        <form id="registerForm" onsubmit="handleRegister(event)" autocomplete="off" novalidate>
+          <label for="register-name">Full name</label>
+          <input id="register-name" type="text" required placeholder="Jane Doe" />
+
+          <label for="register-email">Email</label>
+          <input id="register-email" type="email" required placeholder="you@example.com" />
+
+          <label for="register-password">Password</label>
+          <input id="register-password" type="password" required oninput="checkStrength(this.value)" placeholder="Create a password" />
+          <meter max="4" id="password-strength"></meter>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <small id="password-strength-text" class="strength" style="font-size:13px;color:var(--muted);">Strength: -</small>
+            <label class="password-toggle"><input type="checkbox" onclick="togglePassword('register-password')"> Show</label>
+          </div>
+
+          <label for="register-confirm-password">Confirm password</label>
+          <input id="register-confirm-password" type="password" required placeholder="Confirm password" />
+          <div class="row">
+            <label for="register-dob">Date of birth</label>
+            <input id="register-dob" type="date" style="max-width:170px;" />
+          </div>
+
+          <label for="register-gender">Gender</label>
+          <select id="register-gender">
+            <option value="">Prefer not to say</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+
+          <label for="register-security-question">Security question</label>
+          <select id="register-security-question" required>
+            <option value="">Choose a question</option>
+            <option value="pet">What was your first pet's name?</option>
+            <option value="school">What was the name of your first school?</option>
+            <option value="friend">Who is your childhood best friend?</option>
+          </select>
+          <input id="register-security-answer" type="text" placeholder="Your answer" required />
+
+          <label for="register-goals">Mental health goals (optional)</label>
+          <textarea id="register-goals" placeholder="E.g., Reduce stress, Sleep better"></textarea>
+
+          <div style="margin-top:8px;">
+            <label class="checkbox-label"><input id="register-consent" type="checkbox" required /> I agree to the Terms & Privacy Policy</label>
+          </div>
+
+          <button class="primary" type="submit">Register</button>
+          <p class="message" id="register-message" aria-live="polite"></p>
+
+          <div style="margin-top:10px; text-align:center;">
+            <a class="small-link" onclick="showSection('login-section', document.getElementById('tab-login'))">Already have an account? Login</a>
+          </div>
+        </form>
+      </section>
+
+      <!-- FORGOT -->
+      <section id="forgot-section" class="section" aria-hidden="true" style="display:none;">
+        <h2 style="margin:0 0 8px;">Reset password 🔐</h2>
+        <form id="forgotForm" onsubmit="handleForgot(event)" autocomplete="off" novalidate>
+          <label for="forgot-email">Registered email</label>
+          <input id="forgot-email" type="email" required placeholder="you@example.com" />
+
+          <div id="security-block" style="display:none;">
+            <label id="forgot-question-label">Security question</label>
+            <div style="font-weight:600; margin-top:6px;" id="forgot-question-text"></div>
+            <label for="forgot-answer">Your answer</label>
+            <input id="forgot-answer" type="text" placeholder="Answer" />
+            <label for="new-password">New password</label>
+            <input id="new-password" type="password" oninput="checkStrength(this.value, 'forgot-strength-text', 'forgot-strength-meter')" />
+            <meter id="forgot-strength-meter" max="4"></meter>
+            <small id="forgot-strength-text" style="display:block; margin-top:6px; color:var(--muted);">Strength: -</small>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+              <label class="password-toggle"><input type="checkbox" onclick="togglePassword('new-password')"> Show</label>
+              <button id="reset-check" class="ghost" type="button" onclick="verifySecurity()">Check</button>
+            </div>
+          </div>
+
+          <button class="primary" type="submit">Reset Password</button>
+          <p class="message" id="forgot-message" aria-live="polite"></p>
+
+          <div style="margin-top:10px; text-align:center;">
+            <a class="small-link" onclick="showSection('login-section', document.getElementById('tab-login'))">Back to login</a>
+          </div>
+        </form>
+      </section>
+
+    </div>
+  </div>
+
+<script>
+/*
+  index.html JS
+  - Users stored in localStorage under key "users" as { email: userObj }
+  - userObj: { name, email, hash, salt, dob, gender, securityQuestion, securityAnswerHash, goals }
+  - This is a prototype — storing in localStorage is NOT secure for production.
+*/
+
+// ---------------- Utilities ----------------
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+function toastMessage(el, text='', type='') {
+  el.textContent = text;
+  el.className = 'message' + (type ? ' ' + type : '');
+}
+
+// safe JSON parse
+function loadJSON(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch(e){ return fallback; }
+}
+function saveJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+// convert ArrayBuffer to hex
+function buf2hex(buffer){
+  return Array.prototype.map.call(new Uint8Array(buffer), x => x.toString(16).padStart(2,'0')).join('');
+}
+
+// generate random salt (16 bytes) hex
+function generateSaltHex(){
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return buf2hex(arr);
+}
+
+// SHA-256 hash of (salt + input) and return hex. salt should be hex string
+async function hashWithSalt(password, saltHex) {
+  // convert hex salt to bytes
+  const saltBytes = new Uint8Array(saltHex.match(/.{1,2}/g).map(b=>parseInt(b,16)));
+  const pwBytes = new TextEncoder().encode(password);
+  // concat salt + password
+  const data = new Uint8Array(saltBytes.length + pwBytes.length);
+  data.set(saltBytes, 0);
+  data.set(pwBytes, saltBytes.length);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return buf2hex(hashBuffer);
+}
+
+// wrapper: produces salted hex hash and salt
+async function hashPassword(password){
+  const salt = generateSaltHex();
+  const hash = await hashWithSalt(password, salt);
+  return { salt, hash };
+}
+
+async function verifyPassword(password, saltHex, expectedHash){
+  const h = await hashWithSalt(password, saltHex);
+  return h === expectedHash;
+}
+
+// ---------------- UI / Sections ----------------
+function showSection(sectionId, tabEl) {
+  // hide all sections
+  $$('.section').forEach(s => { s.style.display = 'none'; s.setAttribute('aria-hidden','true'); });
+  // reset tabs
+  $$('.tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+
+  // show requested
+  const sec = document.getElementById(sectionId);
+  if (sec) { sec.style.display = ''; sec.setAttribute('aria-hidden','false'); }
+  if (tabEl) { tabEl.classList.add('active'); tabEl.setAttribute('aria-selected','true'); }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ---------------- Password strength ----------------
+function checkStrength(password, textId='password-strength-text', meterId='password-strength'){
+  let score = 0;
+  if (!password) score = 0;
+  else {
+    if (password.length >= 6) score++;
+    if (/[A-Z]/.test(password) && /\d/.test(password)) score++;
+    if (password.length >= 10 && /[\W_]/.test(password)) score += 2;
+  }
+  score = Math.min(4, score);
+  const textEl = document.getElementById(textId);
+  const meter = document.getElementById(meterId);
+  if (meter) meter.value = score;
+  if (textEl) {
+    const label = score <= 1 ? 'Weak' : score === 2 ? 'Medium' : score >= 3 ? 'Strong' : '-';
+    textEl.textContent = `Strength: ${label}`;
+    textEl.style.color = score <= 1 ? '#e53935' : score === 2 ? '#fbc02d' : '#2e7d32';
+  }
+}
+
+// ---------------- Password toggle ----------------
+function togglePassword(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+// ---------------- Storage helpers ----------------
+const USERS_KEY = 'users'; // stores object: email -> userObj
+
+function getUsers(){
+  return loadJSON(USERS_KEY, {});
+}
+function saveUsers(users){
+  saveJSON(USERS_KEY, users);
+}
+
+// ---------------- Register ----------------
+async function handleRegister(e){
+  e && e.preventDefault();
+  const msg = $('#register-message');
+  toastMessage(msg, '');
+
+  const name = $('#register-name').value.trim();
+  const email = $('#register-email').value.trim().toLowerCase();
+  const password = $('#register-password').value;
+  const confirm = $('#register-confirm-password').value;
+  const dob = $('#register-dob').value || '';
+  const gender = $('#register-gender').value || '';
+  const sq = $('#register-security-question').value || '';
+  const sa = $('#register-security-answer').value.trim();
+  const goals = $('#register-goals').value.trim();
+  const consent = $('#register-consent').checked;
+
+  if (!name || !email || !password || !confirm || !sq || !sa) {
+    toastMessage(msg, 'Please fill required fields.', 'error');
+    return;
+  }
+  if (password !== confirm) {
+    toastMessage(msg, 'Passwords do not match.', 'error');
+    return;
+  }
+  // basic email pattern
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    toastMessage(msg, 'Please enter a valid email address.', 'error');
+    return;
+  }
+  if (!consent) {
+    toastMessage(msg, 'You must agree to the Terms & Privacy Policy.', 'error');
+    return;
+  }
+
+  const users = getUsers();
+  if (users[email]) {
+    toastMessage(msg, 'An account with this email already exists. Try logging in.', 'error');
+    return;
+  }
+
+  // hash password and security answer
+  const { salt, hash } = await hashPassword(password);
+  const saHashObj = await hashPassword(sa.toLowerCase()); // store salted hash of security answer (normalized)
+  // save user
+  users[email] = {
+    name, email, hash, salt,
+    dob, gender,
+    securityQuestion: sq,
+    securityAnswerHash: saHashObj.hash,
+    securityAnswerSalt: saHashObj.salt,
+    goals,
+    createdAt: new Date().toISOString()
+  };
+  saveUsers(users);
+  toastMessage(msg, 'Account created! You can now login.', 'success');
+
+  // optionally clear sensitive fields
+  $('#register-password').value = '';
+  $('#register-confirm-password').value = '';
+  $('#register-security-answer').value = '';
+  // go to login after short delay
+  setTimeout(()=> { showSection('login-section', document.getElementById('tab-login')); }, 900);
+}
+
+// ---------------- Login ----------------
+async function handleLogin(e){
+  e && e.preventDefault();
+  const msg = $('#login-message');
+  toastMessage(msg, '');
+  const email = $('#email').value.trim().toLowerCase();
+  const password = $('#password').value;
+  const remember = $('#rememberMe').checked;
+
+  if (!email || !password) { toastMessage(msg, 'Enter email and password.', 'error'); return; }
+
+  const users = getUsers();
+  const user = users[email];
+  if (!user) { toastMessage(msg, 'No account found for that email.', 'error'); return; }
+
+  const ok = await verifyPassword(password, user.salt, user.hash);
+  if (!ok) { toastMessage(msg, 'Incorrect password.', 'error'); return; }
+
+  // successful login
+  toastMessage(msg, 'Login successful! Redirecting...', 'success');
+  // store current user
+  localStorage.setItem('currentUser', email);
+  if (remember) localStorage.setItem('rememberedUser', email); else localStorage.removeItem('rememberedUser');
+
+  // redirect to home/dashboard page — for prototype we'll go to home.html if exists, else reload
+  setTimeout(()=> {
+    if (location.pathname.endsWith('/index.html') || location.pathname.endsWith('/')) {
+      // try to open home.html in same folder
+      location.href = 'home.html';
+    } else {
+      location.reload();
+    }
+  }, 700);
+}
+
+// ---------------- Forgot password flow ----------------
+function showSecurityBlock(question) {
+  $('#forgot-question-text').textContent = question || '';
+  $('#security-block').style.display = question ? '' : 'none';
+}
+
+// check email entered and load security question
+$('#forgot-email').addEventListener('blur', (ev)=>{
+  const email = ev.target.value.trim().toLowerCase();
+  const users = getUsers();
+  if (!email || !users[email]) {
+    showSecurityBlock(null);
+    $('#forgot-message').textContent = users[email] ? '' : 'No account found for this email.';
+    return;
+  }
+  $('#forgot-message').textContent = '';
+  showSecurityBlock(users[email].securityQuestion);
+});
+
+// verify security answer and enable password reset
+async function verifySecurity(){
+  const email = $('#forgot-email').value.trim().toLowerCase();
+  const answer = $('#forgot-answer').value.trim().toLowerCase();
+  const newPassword = $('#new-password').value;
+  const msg = $('#forgot-message');
+  toastMessage(msg, '');
+
+  if (!email) { toastMessage(msg, 'Enter your registered email first.', 'error'); return; }
+  const users = getUsers(); const user = users[email];
+  if (!user) { toastMessage(msg, 'No account found for that email.', 'error'); return; }
+  if (!answer) { toastMessage(msg, 'Please enter your security answer.', 'error'); return; }
+  // verify answer
+  const ok = await verifyPassword(answer, user.securityAnswerSalt, user.securityAnswerHash);
+  if (!ok) { toastMessage(msg, 'Security answer does not match.', 'error'); return; }
+  // answer ok — proceed to update password if provided
+  if (!newPassword) { toastMessage(msg, 'Now enter a new password and press Reset.', 'success'); return; }
+  // hash new password and store
+  const newHashObj = await hashPassword(newPassword);
+  user.hash = newHashObj.hash; user.salt = newHashObj.salt;
+  users[email] = user;
+  saveUsers(users);
+  toastMessage(msg, 'Password reset successful. You can now login.', 'success');
+  // clear inputs
+  $('#forgot-answer').value = '';
+  $('#new-password').value = '';
+  setTimeout(()=> showSection('login-section', document.getElementById('tab-login')), 900);
+}
+
+async function handleForgot(e){
+  e && e.preventDefault();
+  const email = $('#forgot-email').value.trim().toLowerCase();
+  const answer = $('#forgot-answer').value.trim().toLowerCase();
+  const newPassword = $('#new-password').value;
+  const msg = $('#forgot-message');
+  toastMessage(msg, '');
+
+  if (!email) { toastMessage(msg, 'Enter your registered email.', 'error'); return; }
+  const users = getUsers(); const user = users[email];
+  if (!user) { toastMessage(msg, 'No account found for that email.', 'error'); return; }
+
+  // If security block visible, require answer
+  if (answer && newPassword) {
+    // verify answer
+    const ok = await verifyPassword(answer, user.securityAnswerSalt, user.securityAnswerHash);
+    if (!ok) { toastMessage(msg, 'Security answer is incorrect.', 'error'); return; }
+    const newHashObj = await hashPassword(newPassword);
+    user.hash = newHashObj.hash; user.salt = newHashObj.salt;
+    users[email] = user; saveUsers(users);
+    toastMessage(msg, 'Password reset. Please login.', 'success');
+    setTimeout(()=> showSection('login-section', document.getElementById('tab-login')), 900);
+    return;
+  }
+
+  // If no answer/newPassword supplied, prompt user to use the verify button or fill required fields
+  toastMessage(msg, 'Please answer your security question and provide a new password, then press Reset.', 'error');
+}
+
+// ---------------- Misc / Init ----------------
+document.getElementById('registerForm').addEventListener('submit', handleRegister);
+document.getElementById('loginForm').addEventListener('submit', handleLogin);
+document.getElementById('forgotForm').addEventListener('submit', handleForgot);
+
+// set remembered user if present
+(function initRemembered(){
+  const rem = localStorage.getItem('rememberedUser');
+  if (rem) {
+    $('#email').value = rem;
+    $('#rememberMe').checked = true;
+  }
+})();
+
+// theme toggle
+(function themeInit(){
+  const tm = localStorage.getItem('darkMode');
+  if (tm === 'true') document.body.classList.add('dark');
+  const btn = $('#themeToggle');
+  const setIcon = ()=> btn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  setIcon();
+  btn.onclick = ()=> {
+    document.body.classList.toggle('dark');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+    setIcon();
+  };
+})();
+
+// simple keyboard accessibility: Enter on tabs
+$$('.tab').forEach(t => { t.setAttribute('tabindex','0'); t.addEventListener('keydown', e => { if (e.key === 'Enter') t.click(); }); });
+
+// make sure showing login by default
+showSection('login-section', document.getElementById('tab-login'));
+</script>
+</body>
+</html>
